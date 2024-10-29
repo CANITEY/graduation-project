@@ -1,24 +1,12 @@
-from flask import Flask, Response, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS, cross_origin
-import time
+
+from stream import Stream
 
 app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
-
-count = 0
-
-
-def event_stream():
-    def generate():
-        while True:
-            time.sleep(1)
-            yield f"data: {count}\n\n"
-
-    return Response(generate(),
-                    200,
-                    mimetype="text/event-stream",
-                    )
+stream = Stream(app)
 
 
 @app.get("/")
@@ -29,16 +17,32 @@ def home():
 @app.get("/events")
 @cross_origin()
 def events():
-    return event_stream()
+    return stream.eventStream(stream.publish)
 
 
 # DRIVER RELATED ENDPOINTS
 @app.post("/sos")
 def sos():
-    data = request.json
-    global count
-    count += 1
-    return jsonify(data)
+    data: dict = request.json
+    carInfo = {}
+    try:
+        carInfo = {
+                "carUUID": data["UUID"],
+                "longitude": data["longitude"],
+                "latitude": data["latitude"]
+                }
+    except KeyError:
+        resp = {
+                "status": "failure"
+                }
+        return jsonify(resp)
+
+    resp = {
+            "status": "sucess"
+            }
+    stream.buffer.append(carInfo)
+    events()
+    return jsonify(resp)
 
 
 if __name__ == '__main__':
