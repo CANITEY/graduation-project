@@ -40,7 +40,10 @@ def sos():
     resp = {
             "status": "sucess"
             }
-    stream.buffer.append(carInfo)
+
+    # TODO: add the carInfo as a json to buffer append and try to
+    # send it as a json
+    stream.buffer.append(jsonify(carInfo))
     events()
     return jsonify(resp)
 
