@@ -4,9 +4,9 @@
 
   //TODO: parse the json data comes from the sse and show them
   //then add them to an array each with an ID of its own
-  const eventSource = new EventSource("http://127.0.0.1:5000/events")
+  const eventSource = new EventSource("http://127.0.0.1:5000/events?stream=messages")
   eventSource.onmessage = (event) => {
-    console.log(event)
+    console.log(event.data)
   }
 
 </script>
