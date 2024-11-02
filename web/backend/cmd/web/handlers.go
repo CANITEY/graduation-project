@@ -19,6 +19,10 @@ func (a *application) ping(w http.ResponseWriter, r *http.Request) {
 		a.sse.Publish("messages", &sse.Event{
 			Data: []byte("ping"),
 		})
+		JSONwriter(w, models.Msg{
+			Status: "success",
+			Message: "success",
+		})
 		log.Println("TRIGGER SENT")
 }
 
@@ -36,7 +40,6 @@ func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 			JSONwriter(w, msg)
 			return
 		}
-
 
 		if data.UUID == "" {
 			log.Printf("Can't decode json body from [%v]", r.RemoteAddr)
@@ -68,8 +71,7 @@ func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		
-
-		server.Publish("messages", &sse.Event{
+		a.sse.Publish("messages", &sse.Event{
 			Data: jsonData,
 		})
 }
