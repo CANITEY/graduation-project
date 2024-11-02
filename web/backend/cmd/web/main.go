@@ -14,9 +14,15 @@ type application struct {
 }
 
 func main() {
+	app := NewApplication("")
 
+	server := http.Server{
+		Handler: app.routes(),
+		Addr: ":5000",
+	}
 
-	http.ListenAndServe(":5000", mux)
+	server.ListenAndServe()
+
 }
 
 func NewApplication(sseParameter string) *application {
