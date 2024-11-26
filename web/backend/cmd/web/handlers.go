@@ -9,6 +9,10 @@ import (
 	"github.com/r3labs/sse/v2"
 )
 
+// TODO: Create a login function
+func (a *application) login() {
+
+}
 
 func (a *application) stream(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("access-control-allow-origin", "*")
@@ -19,13 +23,14 @@ func (a *application) ping(w http.ResponseWriter, r *http.Request) {
 		a.sse.Publish("messages", &sse.Event{
 			Data: []byte("ping"),
 		})
-		JSONwriter(w, models.Msg{
+		writeJSON(w, http.StatusOK, models.Msg{
 			Status: "success",
 			Message: "success",
-		})
+		}, nil)
 		log.Println("TRIGGER SENT")
 }
 
+// TODO: link it with the readJSON helper and wait for the validator to validate the data
 func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 		var data models.CarInfo
 		decoder := json.NewDecoder(r.Body)
@@ -37,7 +42,7 @@ func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 				Status: "fail",
 				Message: "JSON object is malformed",
 			}
-			JSONwriter(w, msg)
+			writeJSON(w, http.StatusBadRequest, msg, nil)
 			return
 		}
 
@@ -47,7 +52,7 @@ func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 				Status: "fail",
 				Message: "provide UUID",
 			}
-			JSONwriter(w, msg)
+			writeJSON(w, http.StatusBadRequest, msg, nil)
 			return
 		} else if data.DriverStatus == "" {
 			log.Printf("Can't decode json body from [%v]", r.RemoteAddr)
@@ -55,7 +60,7 @@ func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 				Status: "fail",
 				Message: "provide driver_status",
 			}
-			JSONwriter(w, msg)
+			writeJSON(w, http.StatusBadRequest, msg, nil)
 			return
 		}
 
@@ -63,9 +68,9 @@ func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 			Status: "success",
 			Message: "success",
 		}
-		JSONwriter(w, msg)
+		writeJSON(w, http.StatusOK, msg, nil)
 
-		jsonData, err := json.Marshal(data)
+	jsonData, err := json.Marshal(data)
 		if err != nil {
 			log.Println("Couldn't generate cars' data")
 			return
