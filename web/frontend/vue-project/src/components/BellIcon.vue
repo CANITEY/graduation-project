@@ -8,6 +8,7 @@ const props = defineProps({
     carUUID: String,
     langitude: Number,
     latitude: Number,
+    driverStatus: String,
   }]
 })
 

@@ -3,10 +3,11 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 
-	"github.com/r3labs/sse/v2"
 	_ "github.com/lib/pq"
+	"github.com/r3labs/sse/v2"
 )
 
 type application struct {
@@ -15,7 +16,10 @@ type application struct {
 }
 
 func main() {
-	app := NewApplication("")
+	app, err := NewApplication("")
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 
 	server := http.Server{
 		Handler: app.routes(),
@@ -27,8 +31,24 @@ func main() {
 
 }
 
-func NewApplication(sseParameter string) *application {
 
+func OpenDB() (*sql.DB, error) {
+	// BUG: 2024/11/04 00:46:14 pq: SSL is not enabled on the server
+	db, err := sql.Open("postgres", "postgres://emergency:emergency@localhost/cars@sslmode=disable")
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+	
+
+	return db, nil
+}
+
+
+func NewApplication(sseParameter string) (*application, error) {
 	if sseParameter == "" {
 		sseParameter = "messages"
 	}
@@ -37,8 +57,14 @@ func NewApplication(sseParameter string) *application {
 	server := sse.New()
 	server.CreateStream(sseParameter)
 
+	// open database connection
+	db, err := OpenDB()
+	if err != nil {
+		return nil, err
+	}
+
 	return &application{
 		sse: server,
-
-	}
+		db: db,
+	}, nil
 }
