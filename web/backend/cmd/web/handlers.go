@@ -10,7 +10,9 @@ import (
 )
 
 // TODO: Create a login function
-func (a *application) login() {
+func (a *application) login(w http.ResponseWriter, r *http.Request) {
+	// NOTE:: SHOULD REDIRECT TO THE SECOND STAGE OF THE LOGIN, WHICH WILL BE CARD READER OR AN OTP
+	// THEN AUTHORIZE THEM BOTH TO MAKE THE LOGIN
 
 }
 
