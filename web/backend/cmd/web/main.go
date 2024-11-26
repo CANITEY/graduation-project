@@ -57,14 +57,15 @@ func NewApplication(sseParameter string) (*application, error) {
 	server := sse.New()
 	server.CreateStream(sseParameter)
 
+	// BUG: Commented until I fix bug
 	// open database connection
-	db, err := OpenDB()
-	if err != nil {
-		return nil, err
-	}
+	// db, err := OpenDB()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return &application{
 		sse: server,
-		db: db,
+		// db: db,
 	}, nil
 }
