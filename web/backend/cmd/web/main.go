@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/r3labs/sse/v2"
@@ -20,6 +21,7 @@ func main() {
 		Handler: app.routes(),
 		Addr: ":5000",
 	}
+	fmt.Println("Server started")
 
 	server.ListenAndServe()
 
