@@ -1,12 +1,27 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"go/types"
 	"gp-backend/models"
+	"gp-backend/validate"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/r3labs/sse/v2"
+)
+
+var (
+	password validate.Key = "password"
+	token validate.Key = "token"
+	UUID validate.Key = "UUID"
+	driverStatus validate.Key = "driver_status"
+	longitude validate.Key = "longitude"
+	latitude validate.Key = "latitude"
 )
 
 // TODO: Create a login function
