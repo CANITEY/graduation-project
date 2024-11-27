@@ -8,6 +8,7 @@ import (
 	"net/http"
 )
 
+
 func readJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	err := json.NewDecoder(r.Body).Decode(dst)
 	if err != nil {
@@ -23,8 +24,7 @@ func readJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 			return fmt.Errorf("body contains badly-formed JSON (at character %d)", syntaxError.Offset)
 			// In some circumstances Decode() may also return an io.ErrUnexpectedEOF error
 			// for syntax errors in the JSON. So we check for this using errors.Is() and
-			// return a generic error message. There is an open issue regarding this at
-			// https://github.com/golang/go/issues/25956.
+			// return a generic error message.
 		case errors.Is(err, io.ErrUnexpectedEOF):
 			return errors.New("body contains badly-formed JSON")
 			// Likewise, catch any *json.UnmarshalTypeError errors. These occur when the
