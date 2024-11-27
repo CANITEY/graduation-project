@@ -50,3 +50,6 @@ func Matches(value string, rx regexp.Regexp) bool {
 	return rx.MatchString(value)
 }
 
+func NotEmpty(value string) bool {
+	return len(value) > 0
+}
