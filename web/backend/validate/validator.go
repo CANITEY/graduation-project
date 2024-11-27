@@ -53,3 +53,13 @@ func Matches(value string, rx regexp.Regexp) bool {
 func NotEmpty(value string) bool {
 	return len(value) > 0
 }
+
+func In(value string, list ...string) bool {
+	for _, val := range list {
+		if value == val {
+			return true
+		}
+	}
+
+	return false
+}
