@@ -11,6 +11,7 @@ import (
 	"net/http"
 
 	"github.com/r3labs/sse/v2"
+	"github.com/google/uuid"
 )
 
 var (
@@ -45,7 +46,6 @@ func (a *application) ping(w http.ResponseWriter, r *http.Request) {
 	log.Println("TRIGGER SENT")
 }
 
-// TODO: link it with the readJSON helper and wait for the validator to validate the data
 func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 	var data models.CarInfo
 
@@ -61,8 +61,10 @@ func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 	// UUID validation
 	// Checking not empty
 	validator.Check(validate.NotEmpty(data.UUID), UUID, "must not be empty")
-	// Checking the UUID syntax
-	// TODO:
+	// Checking the UUID format
+	if err := uuid.Validate(data.UUID); err != nil {
+		validator.AddError(UUID, "Not valid format")
+	}
 
 	// driver_status validation
 	validator.Check(validate.NotEmpty(data.DriverStatus), driverStatus, "must not be empty")
