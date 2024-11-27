@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-
+// function that is used to read json data from request and send to dst interface
 func readJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	err := json.NewDecoder(r.Body).Decode(dst)
 	if err != nil {
@@ -61,6 +61,8 @@ func readJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	return nil
 }
 
+
+// function that is used to write data into w http.ResponseWriter attaching headers and status code
 func writeJSON(w http.ResponseWriter, status int, data any, headers http.Header) error {
 	js, err := json.Marshal(data)
 	if err != nil {
@@ -79,3 +81,18 @@ func writeJSON(w http.ResponseWriter, status int, data any, headers http.Header)
 
 	return nil
 } 
+
+// built on writeJSON this function returns a error to client
+func clientError(w http.ResponseWriter, status int, err error) error {
+	jsonError := struct{
+		Status string `json:"status"`
+		Message string `json:"message"`
+	}{
+		Status: "error",
+		Message: err.Error(),
+	}
+
+	writeJSON(w, status, jsonError, nil)
+	return nil
+}
+
