@@ -5,12 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go/types"
 	"gp-backend/models"
 	"gp-backend/validate"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/r3labs/sse/v2"
 )
@@ -32,36 +30,23 @@ func (a *application) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *application) stream(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("access-control-allow-origin", "*")
-		a.sse.ServeHTTP(w, r)
+	w.Header().Add("access-control-allow-origin", "*")
+	a.sse.ServeHTTP(w, r)
 }
 
 func (a *application) ping(w http.ResponseWriter, r *http.Request) {
-		a.sse.Publish("messages", &sse.Event{
-			Data: []byte("ping"),
-		})
-		writeJSON(w, http.StatusOK, models.Msg{
-			Status: "success",
-			Message: "success",
-		}, nil)
-		log.Println("TRIGGER SENT")
+	a.sse.Publish("messages", &sse.Event{
+		Data: []byte("ping"),
+	})
+	writeJSON(w, http.StatusOK, models.Msg{
+		Status: "success",
+		Message: "success",
+	}, nil)
+	log.Println("TRIGGER SENT")
 }
 
 // TODO: link it with the readJSON helper and wait for the validator to validate the data
 func (a *application) sos(w http.ResponseWriter, r *http.Request) {
-		var data models.CarInfo
-		decoder := json.NewDecoder(r.Body)
-		
-		// handle prasing errors
-		if err := decoder.Decode(&data); err != nil {
-			log.Printf("Can't decode json body from [%v]", r.RemoteAddr)
-			msg := models.Msg{
-				Status: "fail",
-				Message: "JSON object is malformed",
-			}
-			writeJSON(w, http.StatusBadRequest, msg, nil)
-			return
-		}
 	var data models.CarInfo
 
 	// error handling for json reading, json sent is read into data variable
@@ -71,38 +56,49 @@ func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// validating json input
+	validator := validate.New()
+	// UUID validation
+	// Checking not empty
+	validator.Check(validate.NotEmpty(data.UUID), UUID, "must not be empty")
+	// Checking the UUID syntax
+	// TODO:
 
-		if data.UUID == "" {
-			log.Printf("Can't decode json body from [%v]", r.RemoteAddr)
-			msg := models.Msg{
-				Status: "fail",
-				Message: "provide UUID",
-			}
-			writeJSON(w, http.StatusBadRequest, msg, nil)
-			return
-		} else if data.DriverStatus == "" {
-			log.Printf("Can't decode json body from [%v]", r.RemoteAddr)
-			msg := models.Msg{
-				Status: "fail",
-				Message: "provide driver_status",
-			}
-			writeJSON(w, http.StatusBadRequest, msg, nil)
-			return
+	// driver_status validation
+	validator.Check(validate.NotEmpty(data.DriverStatus), driverStatus, "must not be empty")
+	validator.Check(validate.In(data.DriverStatus, []string{"sleeping", "fainted", "awake"}), driverStatus, "is a value outside the intended list")
+
+	// longitude & latitude validation
+	validator.Check(data.Longitude == 0, longitude, "must not be zero")
+	validator.Check(data.Latitude == 0, latitude, "must not be zero")
+
+
+	if !validator.Valid() {
+		buf := bytes.NewBufferString("")
+		for key, value := range validator.Errors {
+			format := fmt.Sprintf("%v: %v\n", key, value)
+			buf.WriteString(format)
 		}
 
-		msg := models.Msg{
-			Status: "success",
-			Message: "success",
-		}
-		writeJSON(w, http.StatusOK, msg, nil)
+		err := errors.New(buf.String())
+		clientError(w, http.StatusBadRequest, err)
+		return
+	}
+
+
+	msg := models.Msg{
+		Status: "success",
+		Message: "success",
+	}
+	writeJSON(w, http.StatusOK, msg, nil)
 
 	jsonData, err := json.Marshal(data)
-		if err != nil {
-			log.Println("Couldn't generate cars' data")
-			return
-		}
-		
-		a.sse.Publish("messages", &sse.Event{
-			Data: jsonData,
-		})
+	if err != nil {
+		log.Println("Couldn't generate cars' data")
+		return
+	}
+
+	a.sse.Publish("messages", &sse.Event{
+		Data: jsonData,
+	})
 }
