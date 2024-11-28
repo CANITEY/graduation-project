@@ -103,7 +103,6 @@ func getUSBPath(args []string) (string, error) {
 	}
 
 	return matches[0], nil
-	
 }
 
 func getPassword(args []string) (string) {
