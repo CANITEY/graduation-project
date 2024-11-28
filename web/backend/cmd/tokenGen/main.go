@@ -1,16 +1,12 @@
 package main
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/sha256"
-	"crypto/x509"
-	"encoding/hex"
-	"encoding/pem"
 	"fmt"
+	"gp-backend/crypto/generator"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // TODO: change config to hold username instead of Salt
@@ -58,31 +54,33 @@ func main() {
 
 
 	// generate private key
-	privateKey, err := generatePrivateKey()
+	privateKey, err := generator.GeneratePrivateKey()
 	if err != nil {
 		panic(err)
 	}
 	// write private key to memory (usb flashdrive)
-	privateKeyPEM := pem.EncodeToMemory(&pem.Block{
-		Type: "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
-	})
-
+	privateKeyPEM := generator.GeneratePrivateKeyPEM(privateKey)
 	err = os.WriteFile("/tmp/usb/private_key.pem", privateKeyPEM, 0600)
 	if err != nil {
 		panic(err)
 	}
 
 	// Generate public key for authentication
-	publicKey := &privateKey.PublicKey
-	publicKeyPEM := pem.EncodeToMemory(&pem.Block{
-		Type: "RSA PUBLIC KEY",
-		Bytes: x509.MarshalPKCS1PublicKey(publicKey),
-	})
+	publicKey := generator.GeneratePublicKey(privateKey)
+	publicKeyPEM := generator.GeneratePublicKeyPEM(publicKey)
 	fmt.Println(string(publicKeyPEM))
 
 	fmt.Println("Initialization completed successfully")
-	fmt.Println("Save token to database? [Y/n]")
+	fmt.Print("Save token to database? [Y/n] ")
+	var choice rune
+	fmt.Scanf("%v", choice)
+	switch strings.ToLower(string(choice)) {
+	case "n":
+		return
+	default:
+		// TODO: save to database
+		return
+	}
 	
 }
 
@@ -106,20 +104,6 @@ func getUSBPath(args []string) (string, error) {
 
 func getPassword(args []string) (string) {
 	return args[2]
-}
-
-// Generate RSA key pair
-func generatePrivateKey() (*rsa.PrivateKey, error) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, err
-	}
-	return privateKey, nil
-}
-
-func hashPassword(password string) string {
-	hash := sha256.Sum256([]byte(password))
-	return hex.EncodeToString(hash[:])
 }
 
 func isRoot() (bool) {
