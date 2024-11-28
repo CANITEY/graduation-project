@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"gp-backend/database"
 	"log"
 	"net/http"
 
@@ -12,6 +13,7 @@ import (
 type application struct {
 	sse *sse.Server
 	db *sql.DB
+	udb database.UserDB
 }
 
 func main() {
@@ -25,6 +27,7 @@ func main() {
 		Addr: ":5000",
 	}
 	log.Println("SERVER STARTED")
+	
 
 	server.ListenAndServe()
 
@@ -61,9 +64,13 @@ func NewApplication(sseParameter string) (*application, error) {
 	if err != nil {
 		return nil, err
 	}
+	udb := database.UserDB{
+		DB: db,
+	}
 
 	return &application{
 		sse: server,
 		db: db,
+		udb: udb,
 	}, nil
 }
