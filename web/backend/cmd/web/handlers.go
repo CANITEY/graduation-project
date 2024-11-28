@@ -52,7 +52,7 @@ func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 	// error handling for json reading, json sent is read into data variable
 	err := readJSON(w, r, data)
 	if err != nil {
-		clientError(w, http.StatusBadRequest, err)
+		clientError(w, http.StatusUnprocessableEntity, err)
 		return
 	}
 
