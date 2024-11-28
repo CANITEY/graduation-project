@@ -1,18 +1,16 @@
 package main
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
-	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-
-	"golang.org/x/crypto/pbkdf2"
 )
 
 // TODO: change config to hold username instead of Salt
@@ -33,26 +31,6 @@ func main() {
 	}
 
 
-	password := getPassword(args)
-	masterKey, salt, err := generateMasterKey(password)
-	if err != nil {
-		panic(err)
-	}
-
-	cipher, err := generateCipher(masterKey, salt)
-	if err != nil {
-		panic(err)
-	}
-
-	config := Config{
-		PasswordHash: hashPassword(password),
-		Salt: hex.EncodeToString(salt),
-	}
-
-	configData, err := json.Marshal(config)
-	if err != nil {
-		panic(err)
-	}
 
 	// creating a dir to mount the flash drive defaulting to /tmp/usb
 	if err := createMntDir(); err != nil {
@@ -79,20 +57,33 @@ func main() {
 	defer exec.Command("umount", "/tmp/usb")
 
 
-	// writing config file into drive
-	err = os.WriteFile("/tmp/usb/config.json", configData, 0644)
+	// generate private key
+	privateKey, err := generatePrivateKey()
+	if err != nil {
+		panic(err)
+	}
+	// write private key to memory (usb flashdrive)
+	privateKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type: "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+	})
+
+	err = os.WriteFile("/tmp/usb/private_key.pem", privateKeyPEM, 0600)
 	if err != nil {
 		panic(err)
 	}
 
-	// write encrypted data into usb drive
-	err = os.WriteFile("/tmp/usb/validation.enc", cipher, 0644)
-	if err != nil {
-		panic(err)
-	}
+	// Generate public key for authentication
+	publicKey := &privateKey.PublicKey
+	publicKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type: "RSA PUBLIC KEY",
+		Bytes: x509.MarshalPKCS1PublicKey(publicKey),
+	})
+	fmt.Println(string(publicKeyPEM))
 
-	println("Initialization completed successfully")
-	// TODO: ADD A SAVE TO DATABASE FUNCTIONALITY BY USER CHOICE
+	fmt.Println("Initialization completed successfully")
+	fmt.Println("Save token to database? [Y/n]")
+	
 }
 
 func getArgs() ([]string, error) {
@@ -117,39 +108,13 @@ func getPassword(args []string) (string) {
 	return args[2]
 }
 
-// Generate and test master key for token generation
-func generateMasterKey(password string) ([]byte, []byte, error) {
-	salt := make([]byte, 16)
-	_, err := rand.Read(salt)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	masterKey := pbkdf2.Key([]byte(password), salt, 100000, 32, sha256.New)
-
-
-	return masterKey, salt, nil
-}
-
-func generateCipher(masterKey, salt []byte) ([]byte, error) {
-	block, err := aes.NewCipher(masterKey)
+// Generate RSA key pair
+func generatePrivateKey() (*rsa.PrivateKey, error) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, err
 	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	nonce := make([]byte, gcm.NonceSize())
-	_, err = rand.Read(nonce)
-	if err != nil {
-		return nil, err
-	}
-
-	message := make([]byte, 1024)
-	return gcm.Seal(nil, nonce, message, nil), nil
+	return privateKey, nil
 }
 
 func hashPassword(password string) string {
