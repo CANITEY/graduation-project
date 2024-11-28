@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -25,7 +24,7 @@ func main() {
 		Handler: app.routes(),
 		Addr: ":5000",
 	}
-	fmt.Println("Server started")
+	log.Println("Server started")
 
 	server.ListenAndServe()
 
@@ -33,8 +32,8 @@ func main() {
 
 
 func OpenDB() (*sql.DB, error) {
-	// BUG: 2024/11/04 00:46:14 pq: SSL is not enabled on the server
-	db, err := sql.Open("postgres", "postgres://emergency:emergency@localhost/cars@sslmode=disable")
+	// TODO: connect through ssl (enable sslmode)
+	db, err := sql.Open("postgres", "host=localhost user=emergency password=emergency dbname=cars sslmode=disable")
 	if err != nil {
 		return nil, err
 	}
@@ -57,15 +56,13 @@ func NewApplication(sseParameter string) (*application, error) {
 	server := sse.New()
 	server.CreateStream(sseParameter)
 
-	// BUG: Commented until I fix bug
-	// open database connection
-	// db, err := OpenDB()
-	// if err != nil {
-	// 	return nil, err
-	// }
+	db, err := OpenDB()
+	if err != nil {
+		return nil, err
+	}
 
 	return &application{
 		sse: server,
-		// db: db,
+		db: db,
 	}, nil
 }
