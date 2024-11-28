@@ -24,7 +24,7 @@ func main() {
 		Handler: app.routes(),
 		Addr: ":5000",
 	}
-	log.Println("Server started")
+	log.Println("SERVER STARTED")
 
 	server.ListenAndServe()
 
@@ -42,6 +42,7 @@ func OpenDB() (*sql.DB, error) {
 		return nil, err
 	}
 	
+	log.Println("CONNECTED TO DATABASE CARS")
 
 	return db, nil
 }
