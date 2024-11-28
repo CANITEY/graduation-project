@@ -3,18 +3,12 @@ package main
 import (
 	"fmt"
 	"gp-backend/crypto/generator"
+	"gp-backend/database"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 )
-
-// TODO: change config to hold username instead of Salt
-// make a database table holding salt, password hash, and cipher text
-type Config struct {
-	PasswordHash string `json:"password_hash"`
-	Salt		 string `json:"salt"`
-}
 
 func main() {
 	if !isRoot() {
@@ -78,7 +72,17 @@ func main() {
 	case "n":
 		return
 	default:
-		// TODO: save to database
+		var userId uint
+		fmt.Print("Enter user id: ")
+		fmt.Scanf("%d", &userId)
+		db, err := database.OpenDB()
+		if err != nil {
+			panic(err)
+		}
+		if err := db.AddToken(userId, string(publicKeyPEM)); err != nil {
+			panic(err)
+		}
+		fmt.Println("Token added to database successfully")
 		return
 	}
 	
