@@ -14,3 +14,15 @@ func (d *dbConnector) AddToken(userid uint, publicKey string) error {
 	}
 	return nil
 }
+
+func (d *dbConnector) GetToken(userid uint) (string, error) {
+	stmt := `SELECT publickey from securitytokens where user_id=$1`
+	var publicKey string
+
+	row := d.db.QueryRow(stmt, userid)
+	if err := row.Scan(&publicKey); err != nil {
+		return "", nil
+	}
+	
+	return publicKey, nil
+}
