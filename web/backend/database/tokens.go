@@ -41,6 +41,16 @@ func AddChallenge(d *sql.DB, userid uint, challUUID string, challBody []byte) er
 	return err
 }
 
+func GetChallengeStr(d *sql.DB, challUUID string) (string, error) {
+	stmt := `SELECT challenge FROM securitytokens WHERE chal_token=$1`
+	var challange string
+	if err := d.QueryRow(stmt, challUUID).Scan(&challange); err != nil {
+		return "", err
+	}
+
+	return challange, nil
+}
+
 func GetChallengeStatus(d *sql.DB, challUUID string) (bool, error) {
 	var solved bool
 	stmt := `SELECT solved from securitytokens where chal_token=$1`
