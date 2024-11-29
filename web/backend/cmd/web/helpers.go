@@ -96,7 +96,7 @@ func clientError(w http.ResponseWriter, status int, err error) error {
 	return writeJSON(w, status, jsonError, nil)
 }
 
-func serverError(w http.ResponseWriter, status int, err error) error {
+func serverError(w http.ResponseWriter, err error) error {
 	jsonError := struct{
 		Status string `json:"status"`
 		Message string `json:"message"`
