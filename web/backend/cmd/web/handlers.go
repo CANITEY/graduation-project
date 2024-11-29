@@ -43,15 +43,6 @@ func (a *application) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.sessionManager.Put(r.Context(), "id", id)
-	a.sessionManager.Put(r.Context(), "isAuthenticated", true)
-	
-	err = a.sessionManager.RenewToken(r.Context())
-	if err != nil {
-		serverError(w, err)
-		return
-	}
-
 
 	// creating challenge
 	chalUUID, challBody, err := challenge.CreateChallenge()
@@ -66,16 +57,24 @@ func (a *application) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
+	a.sessionManager.Put(r.Context(), "id", id)
+	a.sessionManager.Put(r.Context(), "isAuthenticated", true)
+	a.sessionManager.Put(r.Context(), "secondAuthDone", false)
+	
+	err = a.sessionManager.RenewToken(r.Context())
+	if err != nil {
+		serverError(w, err)
+		return
+	}
 
 	jsonSuccess := struct {
 		Status string `json:"status"`
 		Message string `json:"message"`
-		Challenge string `json:"challenge"`
+		Next string `json:"next"`
 	} {
-		Status: "success",
+		Status: "redirect",
 		Message: "success",
-		Challenge: chalUUID, 
+		Next: fmt.Sprintf("/challenge/%v", chalUUID), 
 	}
 
 	if err := writeJSON(w, http.StatusSeeOther, jsonSuccess, nil); err != nil {
@@ -83,6 +82,61 @@ func (a *application) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+}
+
+func (a *application) challenge(w http.ResponseWriter, r *http.Request) {
+	Authenticated := a.sessionManager.GetBool(r.Context(), "isAuthenticated")
+	secondAuthDone := a.sessionManager.GetBool(r.Context(), "secondAuthDone")
+
+	if !Authenticated || secondAuthDone {
+		clientError(w, http.StatusMethodNotAllowed, fmt.Errorf("Not Allowed"))
+		return
+	}
+
+	var chall struct {
+		chalUUID string
+	}
+
+	if err := readJSON(w, r, &chall); err != nil {
+		clientError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	solved, err := database.GetChallengeStatus(a.db, chall.chalUUID)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	if !solved {
+		clientError(w, http.StatusOK, fmt.Errorf("Challenge not solved"))
+		return
+	}
+
+	if err := a.sessionManager.RenewToken(r.Context()); err != nil {
+		serverError(w, err)
+		return 
+	}
+	a.sessionManager.Put(r.Context(), "secondAuthDone", true)
+	if err := a.sessionManager.RenewToken(r.Context()); err != nil {
+		serverError(w, err)
+		return 
+	}
+
+	jsonSuccess := struct{
+		Status string `json:"status"`
+		Message string `json:"message"`
+		Next string `json:"next"`
+	} {
+		Status: "redirect",
+		Message: "success",
+		Next: "/dashboard",
+	}
+
+	if err := writeJSON(w, http.StatusSeeOther, jsonSuccess, nil); err != nil {
+		serverError(w, err)
+		return
+	}
 }
 
 func (a *application) stream(w http.ResponseWriter, r *http.Request) {
