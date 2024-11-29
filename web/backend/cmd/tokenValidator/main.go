@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"gp-backend/crypto/validator"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 )
@@ -42,3 +44,21 @@ func getUSBPath(glob string) (string, error) {
 	return matches[0], nil
 }
 
+func getChallenge(carUUID string) (string, error) {
+	resp, err := http.Get(fmt.Sprintf("http://127.0.0.1:5000/challenge/%v", carUUID))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("ERROR: STATUS RESPONSE: ", resp.StatusCode)
+	}
+
+	response, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(response), nil
+}
