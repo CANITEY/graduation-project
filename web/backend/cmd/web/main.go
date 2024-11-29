@@ -5,7 +5,10 @@ import (
 	"gp-backend/database"
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/alexedwards/scs/postgresstore"
+	"github.com/alexedwards/scs/v2"
 	_ "github.com/lib/pq"
 	"github.com/r3labs/sse/v2"
 )
@@ -14,6 +17,7 @@ type application struct {
 	sse *sse.Server
 	db *sql.DB
 	udb database.UserDB
+	sessionManager *scs.SessionManager
 }
 
 func main() {
@@ -28,7 +32,6 @@ func main() {
 	}
 	log.Println("SERVER STARTED")
 	
-
 	server.ListenAndServe()
 
 }
@@ -68,9 +71,14 @@ func NewApplication(sseParameter string) (*application, error) {
 		DB: db,
 	}
 
+	sessionManager := scs.New()
+	sessionManager.Store = postgresstore.New(db)
+	sessionManager.Lifetime = 12 * time.Hour
+
 	return &application{
 		sse: server,
 		db: db,
 		udb: udb,
+		sessionManager: sessionManager,
 	}, nil
 }
