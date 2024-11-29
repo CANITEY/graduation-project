@@ -51,3 +51,17 @@ func GetChallengeStatus(d *sql.DB, challUUID string) (bool, error) {
 
 	return solved, nil
 }
+
+func DeleteChallenge(d *sql.DB, challUUID string) (error) {
+	stmt := `UPDATE securitytokens SET
+	chal_token='',
+	challenge='',
+	solved=false
+	WHERE chal_token=$1`
+	_, err := d.Exec(stmt, challUUID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
