@@ -6,16 +6,17 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 )
 
+// TODO: after getting the challenge follow GPT steps to hash the challenge then solve it, then send the hash again
+// add 2 endpoints to give the challenge and to validate the challenge
 func main() {
-	_, err := getArgs()
+	var carUUID string
+	_, err := fmt.Scanf("%v", &carUUID)
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 	path, err := getUSBPath("/run/media/mohammed/*")
 	if err != nil {
 		log.Fatalln(err)
@@ -27,13 +28,6 @@ func main() {
 	}
 }
 
-func getArgs() ([]string, error) {
-	if len(os.Args) < 2 {
-		return nil, fmt.Errorf("No suffecient args are providied\nusage tokenValidator <challenge code>")
-	}
-
-	return os.Args, nil
-}
 
 func getUSBPath(glob string) (string, error) {
 	matches, err := filepath.Glob(glob)
