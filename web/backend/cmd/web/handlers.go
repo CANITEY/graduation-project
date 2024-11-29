@@ -133,10 +133,16 @@ func (a *application) challenge(w http.ResponseWriter, r *http.Request) {
 		Next: "/dashboard",
 	}
 
+	if err := database.DeleteChallenge(a.db, chall.chalUUID); err != nil {
+		serverError(w, err)
+		return
+	}
+
 	if err := writeJSON(w, http.StatusSeeOther, jsonSuccess, nil); err != nil {
 		serverError(w, err)
 		return
 	}
+
 }
 
 func (a *application) stream(w http.ResponseWriter, r *http.Request) {
