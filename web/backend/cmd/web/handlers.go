@@ -5,13 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gp-backend/crypto/challenge"
+	"gp-backend/database"
 	"gp-backend/models"
 	"gp-backend/validate"
 	"log"
 	"net/http"
 
-	"github.com/r3labs/sse/v2"
 	"github.com/google/uuid"
+	"github.com/r3labs/sse/v2"
 )
 
 var (
@@ -23,11 +25,64 @@ var (
 	latitude validate.Key = "latitude"
 )
 
-// TODO: Create a login function
 func (a *application) login(w http.ResponseWriter, r *http.Request) {
-	// NOTE:: SHOULD REDIRECT TO THE SECOND STAGE OF THE LOGIN, WHICH WILL BE CARD READER OR AN OTP
-	// THEN AUTHORIZE THEM BOTH TO MAKE THE LOGIN
+	var userInfo models.User
+	err := readJSON(w, r, &userInfo)
+	if err != nil {
+		clientError(w, http.StatusBadRequest, err)
+	}
 
+	id, err := a.udb.Authenticate(userInfo.Username, userInfo.Password)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	if err := a.sessionManager.RenewToken(r.Context()); err != nil {
+		serverError(w, err)
+		return
+	}
+
+	a.sessionManager.Put(r.Context(), "id", id)
+	a.sessionManager.Put(r.Context(), "isAuthenticated", true)
+	
+	err = a.sessionManager.RenewToken(r.Context())
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+
+	// creating challenge
+	chalUUID, challBody, err := challenge.CreateChallenge()
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	// saving challenge to database
+	if err := database.AddChallenge(a.db, uint(userInfo.Id), chalUUID, challBody); err != nil {
+		serverError(w, err)
+		return
+	}
+
+
+
+	jsonSuccess := struct {
+		Status string `json:"status"`
+		Message string `json:"message"`
+		Challenge string `json:"challenge"`
+	} {
+		Status: "success",
+		Message: "success",
+		Challenge: chalUUID, 
+	}
+
+	if err := writeJSON(w, http.StatusSeeOther, jsonSuccess, nil); err != nil {
+		serverError(w, err)
+		return
+	}
+	
 }
 
 func (a *application) stream(w http.ResponseWriter, r *http.Request) {
