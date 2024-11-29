@@ -1,8 +1,11 @@
 package validator
 
 import (
+	"crypto"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"fmt"
 	"os"
@@ -32,3 +35,19 @@ func GenerateChallengeHash(challenge string) ([]byte) {
 	return hashedChallenge[:]
 }
 
+func SolveChallenge(pri8Key *rsa.PrivateKey, challenge []byte) (map[string]string, error) {
+	signature, err := rsa.SignPKCS1v15(nil, pri8Key, crypto.SHA256, challenge)
+	if err != nil {
+		return nil, err
+	}
+	
+	challengeBase64Encoded := base64.StdEncoding.EncodeToString(challenge)
+	signatureBase64Encoded := base64.StdEncoding.EncodeToString(signature)
+
+	data := map[string]string{
+		"challenge": challengeBase64Encoded,
+		"signature": signatureBase64Encoded,
+	}
+
+	return data, nil
+}
