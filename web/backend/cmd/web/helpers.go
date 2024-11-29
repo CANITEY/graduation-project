@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 )
 
@@ -92,7 +93,19 @@ func clientError(w http.ResponseWriter, status int, err error) error {
 		Message: err.Error(),
 	}
 
-	writeJSON(w, status, jsonError, nil)
-	return nil
+	return writeJSON(w, status, jsonError, nil)
 }
 
+func serverError(w http.ResponseWriter, status int, err error) error {
+	jsonError := struct{
+		Status string `json:"status"`
+		Message string `json:"message"`
+	} {
+		Status: "server error",
+		Message: "500 internal server error ",
+	}
+
+	log.Println(err)
+
+	return writeJSON(w, http.StatusInternalServerError, jsonError, nil)
+}
