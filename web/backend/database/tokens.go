@@ -1,6 +1,8 @@
 package database
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 func (d *dbConnector) AddToken(userid uint, publicKey string) error {
 	stmt := `SELECT id from employees where id=$1`
@@ -37,4 +39,15 @@ func AddChallenge(d *sql.DB, userid uint, challUUID string, challBody []byte) er
 
 	_, err := d.Exec(stmt, challUUID, challBody, userid)
 	return err
+}
+
+func GetChallengeStatus(d *sql.DB, challUUID string) (bool, error) {
+	var solved bool
+	stmt := `SELECT solved from securitytokens where chal_token=$1`
+	row := d.QueryRow(stmt, challUUID)
+	if err := row.Scan(&solved); err != nil {
+		return false, err
+	}
+
+	return solved, nil
 }
