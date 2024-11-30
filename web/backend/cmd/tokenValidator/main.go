@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"gp-backend/crypto/validator"
 	"io"
@@ -12,8 +14,8 @@ import (
 // TODO: after getting the challenge follow GPT steps to hash the challenge then solve it, then send the hash again
 // add 2 endpoints to give the challenge and to validate the challenge
 func main() {
-	var carUUID string
-	_, err := fmt.Scanf("%v", &carUUID)
+	var challUUID string
+	_, err := fmt.Scanf("%v", &challUUID)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -23,9 +25,28 @@ func main() {
 	}
 
 	// loading private key from drive
-	if _, err := validator.LoadPrivKey(path); err != nil {
+	pri8Key, err := validator.LoadPrivKey(path)
+	if err != nil {
 		log.Fatalln(err)
 	}
+
+	challenge, err := getChallenge(challUUID)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	hash := validator.GenerateChallengeHash(challenge)
+	solution, err := validator.SolveChallenge(pri8Key, hash)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	resp, err := submitSolution(challUUID, solution)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	fmt.Println(resp)
 }
 
 
@@ -38,8 +59,9 @@ func getUSBPath(glob string) (string, error) {
 	return matches[0], nil
 }
 
-func getChallenge(carUUID string) (string, error) {
-	resp, err := http.Get(fmt.Sprintf("http://127.0.0.1:5000/challenge/%v", carUUID))
+
+func getChallenge(challUUID string) (string, error) {
+	resp, err := http.Get(fmt.Sprintf("http://127.0.0.1:5000/challenge/%v", challUUID))
 	if err != nil {
 		return "", err
 	}
@@ -55,4 +77,20 @@ func getChallenge(carUUID string) (string, error) {
 	}
 
 	return string(response), nil
+}
+
+
+func submitSolution(challUUID string, solution map[string]string) (string, error) {
+	jsonData, err := json.Marshal(solution)
+	if err != nil {
+		return "", err
+	}
+	resp, err := http.Post(fmt.Sprintf("http://127.0.0.1:5000/challenge/%v", challUUID), "application/json", bytes.NewBuffer(jsonData)) 
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("ERROR: WRONG SOLUTION, WRONG CHALLENGE")
+	}
+
+
+	return "", nil
 }
