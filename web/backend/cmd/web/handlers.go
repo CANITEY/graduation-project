@@ -202,6 +202,10 @@ func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := database.AddCar(a.db, data); err != nil {
+		serverError(w, err)
+		return
+	}
 
 	msg := models.Msg{
 		Status: "success",
