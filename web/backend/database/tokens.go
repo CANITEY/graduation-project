@@ -1,7 +1,11 @@
 package database
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
 	"database/sql"
+	"encoding/pem"
+	"fmt"
 )
 
 func (d *dbConnector) AddToken(userid uint, publicKey string) error {
@@ -74,4 +78,31 @@ func DeleteChallenge(d *sql.DB, challUUID string) (error) {
 	}
 
 	return nil
+}
+
+func GetPubKey(d *sql.DB, challUUID string) (*rsa.PublicKey, error) {
+	var pubStr string
+	stmt := `SELECT publickey FROM securitytokens WHERE chal_token=$1`
+
+	if err := d.QueryRow(stmt, challUUID).Scan(&pubStr); err != nil {
+		return nil, err
+	}
+
+	block, _ := pem.Decode([]byte(pubStr))
+	if block == nil || block.Type != "PUBLIC KEY" {
+		return nil, fmt.Errorf("ERROR: BLOCK CAN'T BE READ")
+	}
+
+	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
+
+	if err != nil {
+		return nil, fmt.Errorf("FAILED PARSING THE PUBLIC KEY")
+	}
+
+	rsaPubkey, ok := pub.(*rsa.PublicKey)
+	if !ok {
+		return nil, fmt.Errorf("FAILED CONVERTING THE PUBLIC KEY")
+	}
+
+	return rsaPubkey, nil
 }
