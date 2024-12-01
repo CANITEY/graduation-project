@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"gp-backend/crypto/validator"
 	"gp-backend/database"
@@ -31,5 +32,60 @@ func (a *application) challGetter(w http.ResponseWriter, r *http.Request) {
 
 	if err := writeJSON(w, http.StatusOK, jsonMsg, nil); err != nil {
 		serverError(w, err)
+		return
 	}
+}
+
+func (a *application) challengeValidator(w http.ResponseWriter, r *http.Request) {
+	challUUID := r.PathValue("challUUID")
+	if err := uuid.Validate(challUUID); err != nil {
+		clientError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	var clientSol map[string]string
+	if err := readJSON(w, r, &clientSol); err != nil {
+		clientError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	challStr, err := database.GetChallengeStr(a.db, challUUID)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	pub, err := database.GetPubKey(a.db, challUUID)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	resolved, err := validator.ResolveChallenge(pub, []byte(challStr), clientSol["signature"])
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	if !resolved {
+		clientError(w, http.StatusUnauthorized, fmt.Errorf("challenge solution is wrong"))
+		return
+	}
+
+	if err := database.SolveChall(a.db, challUUID); err != nil {
+		serverError(w, err)
+		return
+	}
+
+	jsonSuccess, err := json.Marshal(map[string]string{
+		"status":"success",
+		"message":"success, validate at client-side",
+	})
+
+	if err := writeJSON(w, http.StatusOK, jsonSuccess, nil); err != nil {
+		serverError(w, err)
+		return
+	}
+
+	return
 }
