@@ -29,7 +29,7 @@ func (d *UserDB) AddUser(username, password string) error {
 func (d *UserDB) Authenticate(username, password string) (int, error) {
 	var id int
 	var dbPassword []byte
-	stmt := `SELECT id, password FROM employess WHERE username=$1`
+	stmt := `SELECT id, password FROM employees WHERE username=$1`
 	row := d.DB.QueryRow(stmt, username)
 	if err := row.Scan(&id, &dbPassword); err != nil {
 		return 0, err
