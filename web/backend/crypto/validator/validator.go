@@ -41,11 +41,9 @@ func SolveChallenge(pri8Key *rsa.PrivateKey, challenge []byte) (map[string]strin
 		return nil, err
 	}
 	
-	challengeBase64Encoded := base64.StdEncoding.EncodeToString(challenge)
 	signatureBase64Encoded := base64.StdEncoding.EncodeToString(signature)
 
 	data := map[string]string{
-		"challenge": challengeBase64Encoded,
 		"signature": signatureBase64Encoded,
 	}
 
