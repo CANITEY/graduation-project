@@ -1,12 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"gp-backend/database"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 func (a *application) challGetter(w http.ResponseWriter, r *http.Request) {
 	challUUID := r.PathValue("challUUID")
+	if err := uuid.Validate(challUUID); err != nil {
+		clientError(w, http.StatusBadRequest, err)
+	}
 	challenge, err := database.GetChallengeStr(a.db, challUUID)
 	if err != nil {
 		serverError(w, err)
