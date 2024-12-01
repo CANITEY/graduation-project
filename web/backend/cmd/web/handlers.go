@@ -43,7 +43,6 @@ func (a *application) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	// creating challenge
 	chalUUID, challBody, err := challenge.CreateChallenge()
 	if err != nil {
@@ -165,7 +164,7 @@ func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 	var data models.CarInfo
 
 	// error handling for json reading, json sent is read into data variable
-	err := readJSON(w, r, data)
+	err := readJSON(w, r, &data)
 	if err != nil {
 		clientError(w, http.StatusUnprocessableEntity, err)
 		return
@@ -186,8 +185,8 @@ func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 	validator.Check(validate.In(data.DriverStatus, []string{"sleeping", "fainted", "awake"}), driverStatus, "is a value outside the intended list")
 
 	// longitude & latitude validation
-	validator.Check(data.Longitude == 0, longitude, "must not be zero")
-	validator.Check(data.Latitude == 0, latitude, "must not be zero")
+	validator.Check(!(data.Longitude == 0), longitude, "must not be zero")
+	validator.Check(!(data.Latitude == 0), latitude, "must not be zero")
 
 
 	if !validator.Valid() {
