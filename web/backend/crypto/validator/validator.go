@@ -49,3 +49,9 @@ func SolveChallenge(pri8Key *rsa.PrivateKey, challenge []byte) (map[string]strin
 
 	return data, nil
 }
+
+// TODO: FILL ME PLS
+func ResolveChallenge(pubKey *rsa.PublicKey, challenge []byte, solution string) (bool, error) {
+
+
+}
