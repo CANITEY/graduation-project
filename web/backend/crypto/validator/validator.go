@@ -50,8 +50,12 @@ func SolveChallenge(pri8Key *rsa.PrivateKey, challenge []byte) (map[string]strin
 	return data, nil
 }
 
-// TODO: FILL ME PLS
 func ResolveChallenge(pubKey *rsa.PublicKey, challenge []byte, solution string) (bool, error) {
+	hashedChallenge := sha256.Sum256(challenge)
+	err := rsa.VerifyPKCS1v15(pubKey, crypto.SHA256, hashedChallenge[:], []byte(solution))
+	if err != nil {
+		return false, err
+	}
 
-
+	return true, nil
 }
