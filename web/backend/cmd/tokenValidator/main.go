@@ -11,8 +11,6 @@ import (
 	"path/filepath"
 )
 
-// TODO: after getting the challenge follow GPT steps to hash the challenge then solve it, then send the hash again
-// add 2 endpoints to give the challenge and to validate the challenge
 func main() {
 	var challUUID string
 	_, err := fmt.Scanf("%v", &challUUID)

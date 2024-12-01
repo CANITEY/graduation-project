@@ -7,8 +7,6 @@ import (
 // this special data type will be used to create enums for the validator
 type Key string
 
-// TODO: create a UUID validator
-
 var (
 	EmailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]@emergency.sys")
 	Email Key = "email"
