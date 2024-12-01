@@ -80,6 +80,12 @@ func DeleteChallenge(d *sql.DB, challUUID string) (error) {
 	return nil
 }
 
+func SolveChall(d *sql.DB, challUUID string) (error) {
+	stmt := `UPDATE securitytokens SET solved=true WHERE chal_token=$1`
+	_, err := d.Exec(stmt, challUUID)
+	return err
+}
+
 func GetPubKey(d *sql.DB, challUUID string) (*rsa.PublicKey, error) {
 	var pubStr string
 	stmt := `SELECT publickey FROM securitytokens WHERE chal_token=$1`
@@ -106,3 +112,4 @@ func GetPubKey(d *sql.DB, challUUID string) (*rsa.PublicKey, error) {
 
 	return rsaPubkey, nil
 }
+
