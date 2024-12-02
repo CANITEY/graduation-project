@@ -45,11 +45,11 @@ func AddChallenge(d *sql.DB, userid uint, challUUID string, challBody []byte) er
 	return err
 }
 
-func GetChallengeStr(d *sql.DB, challUUID string) (string, error) {
+func GetChallengeStr(d *sql.DB, challUUID string) ([]byte, error) {
 	stmt := `SELECT challenge FROM securitytokens WHERE chal_token=$1`
-	var challange string
+	var challange []byte
 	if err := d.QueryRow(stmt, challUUID).Scan(&challange); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	return challange, nil
@@ -95,21 +95,15 @@ func GetPubKey(d *sql.DB, challUUID string) (*rsa.PublicKey, error) {
 	}
 
 	block, _ := pem.Decode([]byte(pubStr))
-	if block == nil || block.Type != "PUBLIC KEY" {
+	if block == nil || block.Type != "RSA PUBLIC KEY" {
 		return nil, fmt.Errorf("ERROR: BLOCK CAN'T BE READ")
 	}
 
-	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
-
+	pub, err := x509.ParsePKCS1PublicKey(block.Bytes)
 	if err != nil {
 		return nil, fmt.Errorf("FAILED PARSING THE PUBLIC KEY")
 	}
 
-	rsaPubkey, ok := pub.(*rsa.PublicKey)
-	if !ok {
-		return nil, fmt.Errorf("FAILED CONVERTING THE PUBLIC KEY")
-	}
-
-	return rsaPubkey, nil
+	return pub, nil
 }
 
