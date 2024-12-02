@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gp-backend/crypto/generator"
 	"gp-backend/database"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -74,7 +75,10 @@ func main() {
 	default:
 		var userId uint
 		fmt.Print("Enter user id: ")
-		fmt.Scanf("%d", &userId)
+		if _, err := fmt.Scanf("%d", &userId); err != nil {
+			log.Fatalln(err)
+		}
+
 		db, err := database.OpenDB()
 		if err != nil {
 			panic(err)
