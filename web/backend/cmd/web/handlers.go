@@ -31,12 +31,12 @@ func (a *application) login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		clientError(w, http.StatusBadRequest, err)
 	}
-
 	id, err := a.udb.Authenticate(userInfo.Username, userInfo.Password)
 	if err != nil {
 		serverError(w, err)
 		return
 	}
+	userInfo.Id = id
 
 	if err := a.sessionManager.RenewToken(r.Context()); err != nil {
 		serverError(w, err)
@@ -49,6 +49,9 @@ func (a *application) login(w http.ResponseWriter, r *http.Request) {
 		serverError(w, err)
 		return
 	}
+
+	// DONE: 2024/12/02 21:32:42 pq: invalid byte sequence for encoding "UTF8": 0x92
+	// convert the type of database column into blob or some shit
 
 	// saving challenge to database
 	if err := database.AddChallenge(a.db, uint(userInfo.Id), chalUUID, challBody); err != nil {
