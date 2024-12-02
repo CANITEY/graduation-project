@@ -50,9 +50,15 @@ func SolveChallenge(pri8Key *rsa.PrivateKey, challenge []byte) (map[string]strin
 	return data, nil
 }
 
+// TODO: solved
+// BUG:::::: crypto/rsa: verification error <SOLVED>
 func ResolveChallenge(pubKey *rsa.PublicKey, challenge []byte, solution string) (bool, error) {
 	hashedChallenge := sha256.Sum256(challenge)
-	err := rsa.VerifyPKCS1v15(pubKey, crypto.SHA256, hashedChallenge[:], []byte(solution))
+	unbased, err := base64.StdEncoding.DecodeString(solution)
+	if err != nil {
+		return false, err
+	}
+	err = rsa.VerifyPKCS1v15(pubKey, crypto.SHA256, hashedChallenge[:], unbased)
 	if err != nil {
 		return false, err
 	}
