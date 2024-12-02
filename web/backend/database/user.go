@@ -41,3 +41,13 @@ func (d *UserDB) Authenticate(username, password string) (int, error) {
 
 	return id, nil
 }
+
+func (d *UserDB) Exists(id int) (bool, error) {
+	stmt := `SELECT * FROM employees WHERE id=$1`
+	_, err := d.DB.Exec(stmt, id)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
