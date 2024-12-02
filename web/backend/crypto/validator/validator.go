@@ -29,8 +29,8 @@ func LoadPrivKey(path string) (*rsa.PrivateKey, error) {
 	return privateKey, nil
 }
 
-func GenerateChallengeHash(challenge string) ([]byte) {
-	hashedChallenge := sha256.Sum224([]byte(challenge))
+func GenerateChallengeHash(challenge []byte) ([]byte) {
+	hashedChallenge := sha256.Sum256(challenge)
 
 	return hashedChallenge[:]
 }
