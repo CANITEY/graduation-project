@@ -74,7 +74,12 @@ func getChallenge(challUUID string) (string, error) {
 		return "", err
 	}
 
-	return string(response), nil
+	challenge := make(map[string]string)
+	if err := json.Unmarshal(response, &challenge); err != nil {
+		return "", err
+	}
+
+	return challenge["challenge"], nil
 }
 
 
