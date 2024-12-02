@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"gp-backend/crypto/validator"
@@ -12,6 +13,7 @@ import (
 )
 
 func main() {
+	fmt.Print("enter the challenge UUID: ")
 	var challUUID string
 	_, err := fmt.Scanf("%v", &challUUID)
 	if err != nil {
@@ -33,7 +35,9 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	
 	hash := validator.GenerateChallengeHash(challenge)
+	// FIXED:: crypto/rsa: input must be hashed message
 	solution, err := validator.SolveChallenge(pri8Key, hash)
 	if err != nil {
 		log.Fatalln(err)
@@ -58,28 +62,32 @@ func getUSBPath(glob string) (string, error) {
 }
 
 
-func getChallenge(challUUID string) (string, error) {
+func getChallenge(challUUID string) ([]byte, error) {
 	resp, err := http.Get(fmt.Sprintf("http://127.0.0.1:5000/challenge/%v", challUUID))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("ERROR: STATUS RESPONSE: ", resp.StatusCode)
+		return nil, fmt.Errorf("ERROR: STATUS RESPONSE: ", resp.StatusCode)
 	}
 
 	response, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	challenge := make(map[string]string)
 	if err := json.Unmarshal(response, &challenge); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return challenge["challenge"], nil
+	chall, err := base64.StdEncoding.DecodeString(challenge["challenge"])
+	if err != nil {
+		return nil, err
+	}
+	return chall, nil
 }
 
 
