@@ -23,15 +23,14 @@ func (a *application) challGetter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var chall []byte
-	base64.StdEncoding.Encode(chall, []byte(challenge))
+	chall := base64.StdEncoding.EncodeToString(challenge)
 
 	jsonMsg := struct{
 		Status string `json:"status"`
 		Challenge string `json:"challenge"`
 	}{
 		Status: "success", 
-		Challenge: string(chall),
+		Challenge: chall,
 	}
 
 	if err := writeJSON(w, http.StatusOK, jsonMsg, nil); err != nil {
