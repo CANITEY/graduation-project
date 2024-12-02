@@ -223,3 +223,23 @@ func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 		Data: jsonData,
 	})
 }
+
+// TODO: FILL ME PLEASE
+func (a *application) viewCar(w http.ResponseWriter, r *http.Request) {
+	carUUID := r.PathValue("challUUID")
+	if err := uuid.Validate(carUUID); err != nil {
+		clientError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	carInfo, err := database.GetCar(a.db, carUUID)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	if err := writeJSON(w, http.StatusOK, carInfo, nil); err != nil {
+		serverError(w, err)
+		return
+	}
+}
