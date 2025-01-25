@@ -1,0 +1,5 @@
+shape_predictor_68_face_landmarks.dat*
+.env
+web/backend/go.sum
+web/backend/bin/tokenGen
+
