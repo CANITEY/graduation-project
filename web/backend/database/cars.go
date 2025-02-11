@@ -19,7 +19,7 @@ func AddCar(d *sql.DB, carInfo models.CarInfo) (error) {
 func GetCar(d *sql.DB, carUUID string) (*models.CarInfo, error) {
 	var carinfo models.CarInfo
 	stmt := `SELECT longitude, latitude, driver_status FROM cars WHERE uuid=$1`
-	if err := d.QueryRow(stmt, carUUID).Scan(carinfo.Longitude, carinfo.Latitude, carinfo.DriverStatus); err != nil {
+	if err := d.QueryRow(stmt, carUUID).Scan(&carinfo.Longitude, &carinfo.Latitude, &carinfo.DriverStatus); err != nil {
 		return nil, err
 	}
 

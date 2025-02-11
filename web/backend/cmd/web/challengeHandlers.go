@@ -64,7 +64,7 @@ func (a *application) challengeValidator(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	resolved, err := validator.ResolveChallenge(pub, []byte(challStr), clientSol["signature"])
+	resolved, err := validator.ResolveChallenge(pub, challStr, clientSol["signature"])
 	if err != nil {
 		serverError(w, err)
 		return
