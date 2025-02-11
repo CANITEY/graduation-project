@@ -1,12 +1,13 @@
 #!/bin/env python3
+from enum import global_flag_repr
 import cv2
 import numpy as np
 import dlib
 from math import hypot
+import time
 
-print("start")
+
 cap = cv2.VideoCapture(0)
-print("start")
 
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
@@ -85,6 +86,58 @@ def mouth (eye_points, facial_landmarks):
 
     ratio = hor_line_lenght / ver_line_lenght
     return ratio
+
+"""
+This additions are done by CANITEY
+GOAL:
+    make a sensing for the time span of blink, yawn, eye direction
+"""
+class Timer:
+    def __init__(self, duration=3, callback=None):
+        self.duration_ = duration
+        self.now__ = time.time()
+        self.current_ = None
+        self.callback_ = self.default_callback if callback == None else callback
+
+    def default_callback(self):
+        print("passed")
+
+    def sense(self):
+        self.current_ = time.time()
+        if self.current_ - self.now__ >= self.duration_ :
+            self.callback_()
+
+class GlobalTimer:
+    def __init__(self):
+        self.right_timer_ = None
+        self.left_timer_ = None
+        self.blink_timer_ = None
+        self.yawn_timer_ = None
+
+    def init_if_none(self, timer: str):
+        match timer.lower():
+            case "right":
+                if self.right_timer_ == None:
+                    self.right_timer_ = Timer()
+            case "left":
+                if self.left_timer_ == None:
+                    self.left_timer_ = Timer()
+            case "blink":
+                if self.blink_timer_ == None:
+                    self.blink_timer_ = Timer()
+            case "yawn":
+                if self.yawn_timer_ == None:
+                    self.yawn_timer_ = Timer()
+    
+    def reset_all_timers(self):
+        self.right_timer_ = None
+        self.left_timer_  = None
+        self.blink_timer_ = None
+        self.yawn_timer_  = None
+
+
+global_timer = GlobalTimer()
+
 while True:
     _, frame = cap.read()
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -107,19 +160,35 @@ while True:
         #cv2.putText(frame, str(gaze_ratio), (50, 100), 0, 2, (0, 255, 0), 3)
 
         if gaze_ratio < 0.5:
-             cv2.putText(frame, "RIGHT", (420, 50), 0, 2, (0, 0, 255), 3)
+            cv2.putText(frame, "RIGHT", (420, 50), 0, 2, (0, 0, 255), 3)
+            global_timer.init_if_none("right")
+            global_timer.right_timer_.sense()
+            continue
         elif gaze_ratio > 2:
-             cv2.putText(frame, "LEFT", (420, 50), 0, 2, (0, 0, 255), 3)
+            cv2.putText(frame, "LEFT", (420, 50), 0, 2, (0, 0, 255), 3)
+            global_timer.init_if_none("left")
+            global_timer.left_timer_.sense()
+            continue
         else:
-             cv2.putText(frame, "CENTER", (420, 50), 0, 2, (0, 0, 255), 3)         
+            cv2.putText(frame, "CENTER", (420, 50), 0, 2, (0, 0, 255), 3)         
 
 
         if blinking_ratio > 5.7:
-             cv2.putText(frame, "BLINKING", (0, 480), 0, 2, (255, 0, 0), 3)
-        
+            cv2.putText(frame, "BLINKING", (0, 480), 0, 2, (255, 0, 0), 3)
+            global_timer.init_if_none("blink")
+            global_timer.blink_timer_.sense()
+            continue
+
         #cv2.putText(frame, str(mouth_ratio), (150, 300) ,0 ,4, (255, 0, 0), 3)
         if mouth_ratio < 1.2:
             cv2.putText(frame, "yawning", (400, 460), 0, 2, (255, 0, 0), 3)
+            global_timer.init_if_none("yawn")
+            global_timer.yawn_timer_.sense()
+            continue
+
+
+        print("BAD")
+        global_timer.reset_all_timers()
     cv2.imshow("Frame", frame)
     key = cv2.waitKey(1)
     if key == 27:
