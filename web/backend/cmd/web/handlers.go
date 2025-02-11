@@ -229,7 +229,7 @@ func (a *application) sos(w http.ResponseWriter, r *http.Request) {
 
 // TODO: FILL ME PLEASE
 func (a *application) viewCar(w http.ResponseWriter, r *http.Request) {
-	carUUID := r.PathValue("challUUID")
+	carUUID := r.PathValue("carUUID")
 	if err := uuid.Validate(carUUID); err != nil {
 		clientError(w, http.StatusBadRequest, err)
 		return
@@ -240,6 +240,8 @@ func (a *application) viewCar(w http.ResponseWriter, r *http.Request) {
 		serverError(w, err)
 		return
 	}
+
+	carInfo.UUID = carUUID
 
 	if err := writeJSON(w, http.StatusOK, carInfo, nil); err != nil {
 		serverError(w, err)
