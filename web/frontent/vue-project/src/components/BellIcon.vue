@@ -39,6 +39,7 @@ function showNotificationMenu() {
             rounded
             max-h-32
             overflow-scroll
+            width-[200px]
             "
             id="notification-container"
             >
@@ -47,6 +48,7 @@ function showNotificationMenu() {
                   hover:bg-gray-300
                   cursor-pointer
                   p-1
+                  text-xs
                   ">
                   <div>{{ car.carUUID }}</div>
                   <div class="flex justify-between">
@@ -76,12 +78,3 @@ function showNotificationMenu() {
           </div>
       </div>
 </template>
-
-<style scoped>
-#notification-container {
-  width: 200px;
-}
-#notification-item {
-  font-size: 12px;
-}
-</style>
